@@ -29,6 +29,10 @@
 #include <kj/vector.h>
 #include "generated-header-support.h"
 
+#if !KJ_NO_RTTI
+#include <typeinfo>
+#endif
+
 namespace capnp {
 
 namespace _ {
@@ -81,6 +85,12 @@ kj::Promise<kj::Maybe<int>> Capability::Client::getFd() {
   }
 }
 
+kj::String Capability::Client::debugInfo() {
+  kj::Vector<kj::ConstString> vec;
+  hook->debugInfo(vec);
+  return kj::strArray(vec, ":");
+}
+
 kj::Maybe<kj::Promise<Capability::Client>> Capability::Server::shortenPath() {
   return kj::none;
 }
@@ -122,6 +132,14 @@ kj::Promise<void> ClientHook::whenResolved() {
 
 kj::Promise<void> Capability::Client::whenResolved() {
   return hook->whenResolved().attach(hook->addRef());
+}
+
+void ClientHook::debugInfo(kj::Vector<kj::ConstString>& chain) {
+#if KJ_NO_RTTI
+  chain.add("unknown"_kjc);
+#else
+  chain.add(kj::str(typeid(*this).name()));
+#endif
 }
 
 // =======================================================================================
@@ -463,6 +481,15 @@ public:
     }
   }
 
+  void debugInfo(kj::Vector<kj::ConstString>& chain) override {
+    KJ_IF_SOME(r, redirect) {
+      chain.add("resolved"_kjc);
+      r->debugInfo(chain);
+    } else {
+      chain.add("promise"_kjc);
+    }
+  }
+
 private:
   typedef kj::ForkedPromise<kj::Own<ClientHook>> ClientHookPromiseFork;
 
@@ -733,6 +760,24 @@ public:
       return s->getFd();
     } else {
       return kj::none;
+    }
+  }
+
+  void debugInfo(kj::Vector<kj::ConstString>& chain) override {
+    KJ_IF_SOME(e, brokenException) {
+      chain.add("broken"_kjc);
+      chain.add(kj::str(e));
+    } else KJ_IF_SOME(r, resolved) {
+      chain.add("shortened"_kjc);
+      r->debugInfo(chain);
+    } else KJ_IF_SOME(s, server) {
+      chain.add("local"_kjc);
+#if !KJ_NO_RTTI
+      auto& ref = *s;
+      chain.add(kj::str(typeid(ref).name()));
+#endif
+    } else {
+      chain.add("revoked"_kjc);
     }
   }
 
@@ -1060,6 +1105,11 @@ public:
 
   kj::Maybe<int> getFd() override {
     return kj::none;
+  }
+
+  void debugInfo(kj::Vector<kj::ConstString>& chain) override {
+    chain.add("broken"_kjc);
+    chain.add(kj::str(exception));
   }
 
 private:
