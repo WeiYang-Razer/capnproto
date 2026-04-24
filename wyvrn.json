@@ -1,0 +1,27 @@
+{
+  "name": "capnproto",
+  "version": "1.4.0.0",
+  "schemaVersion": 2,
+  "kind": "StaticLib",
+  "description": "Cap'n Proto serialization / RPC framework",
+  "dependencies": {},
+  "build": {
+    "system": "cmake",
+    "configs": [
+      "Debug",
+      "Release",
+      "RelWithDebInfo",
+      "MinSizeRel"
+    ],
+    "configure": [
+      "-DBUILD_SHARED_LIBS=OFF",
+      "-DBUILD_TESTING=OFF",
+      "-DCAPNP_LITE=OFF",
+      "-DEXTERNAL_CAPNP=OFF",
+      "-DCMAKE_DEBUG_POSTFIX=d",
+      "-DCMAKE_RELWITHDEBINFO_POSTFIX=rd",
+      "-DCMAKE_MINSIZEREL_POSTFIX=msr"
+    ],
+    "installDir": "install"
+  }
+}
