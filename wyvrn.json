@@ -1,6 +1,6 @@
 {
   "name": "capnproto",
-  "version": "1.4.0.0",
+  "version": "1.5.0.0",
   "schemaVersion": 2,
   "kind": "StaticLib",
   "description": "Cap'n Proto serialization / RPC framework",
